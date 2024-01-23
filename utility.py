@@ -9,7 +9,7 @@ class makeBalanceSheet:
         self.balanceSheet = self.balanceSheet[::-1]
         self.balanceSheet["fiscalDateEnding"] = pd.to_datetime(self.balanceSheet["fiscalDateEnding"]).dt.strftime("%Y")
         self.balanceSheet.drop(columns=["reportedCurrency"], inplace=True)
-        self.balanceSheet.drop([3, 4], inplace=True)
+        self.balanceSheet.drop([4], inplace=True)
         self.balanceSheet = self.balanceSheet.astype(int)
     
     def returnBalanceSheet(self):
@@ -31,7 +31,7 @@ class makeIncomeStatement:
                 "researchAndDevelopment",
             ], inplace=True
         )
-        self.incomeStatement.drop([3, 4], inplace=True)
+        self.incomeStatement.drop([4], inplace=True)
         self.incomeStatement = self.incomeStatement.astype(int)
         self.incomeStatement["ebit"] = (
             self.incomeStatement["ebitda"] - self.incomeStatement["depreciationAndAmortization"]

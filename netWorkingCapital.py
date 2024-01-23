@@ -17,6 +17,10 @@ class netWorkingCapital:
         self.netWorkingCapital["currentAssets"] = self.netWorkingCapital["currentNetReceivables"] + self.netWorkingCapital["inventory"]
         self.netWorkingCapital["currentLiabilities"] = self.netWorkingCapital["currentAccountsPayable"]
         self.netWorkingCapital["netWorkingCapital"] = self.netWorkingCapital["currentAssets"] - self.netWorkingCapital["currentLiabilities"]
+        
+        latest_year = self.netWorkingCapital["fiscalDateEnding"].iloc[-1]
+        next_years = pd.DataFrame({"fiscalDateEnding": [latest_year + i for i in range(1, 6)]})
+        self.netWorkingCapital = pd.concat([self.netWorkingCapital, next_years], ignore_index=True)
     
     def generateAssumptions(self):
         self.netWorkingCapital["DSO"] = self.netWorkingCapital["currentNetReceivables"] / (self.income_statement_data["totalRevenue"] / 365)
