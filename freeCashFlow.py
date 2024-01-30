@@ -3,9 +3,9 @@ import numpy as np
 
 class freeCashFlow:
     assumptions = {
-        "revenue_growth_rate": [0.07, 0.08, 0.09, 0.08, 0.07],
-        "cogs_percentage_of_revenue": [0.6, 0.6, 0.6, 0.6, 0.6],
-        "operating_expenses_percentage_of_revenue": [0.2, 0.2, 0.2, 0.2, 0.2],
+        "revenue_growth_rate": [0.1, 0.1, 0.1, 0.1, 0.1],
+        "cogs_percentage_of_revenue": [0.55, 0.55, 0.55, 0.55, 0.55],
+        "operating_expenses_percentage_of_revenue": [0.13, 0.13, 0.13, 0.13, 0.13],
     }
     
     def __init__(self, cash_flow_data, income_statement_data, nwc, fixedAssetSchedule):
@@ -98,7 +98,20 @@ class freeCashFlow:
             # project net income
             self.unleveredFreeCashFlow.loc[self.unleveredFreeCashFlow["fiscalDateEnding"] == year, 'netIncome'] = self.unleveredFreeCashFlow.loc[self.unleveredFreeCashFlow["fiscalDateEnding"] == year, 'ebit'] - \
                 self.unleveredFreeCashFlow.loc[self.unleveredFreeCashFlow["fiscalDateEnding"] == year, 'incomeTaxExpense']
-            
+            # add back depreciation and amortization
+            self.unleveredFreeCashFlow.loc[self.unleveredFreeCashFlow["fiscalDateEnding"] == year, 'depreciationDepletionAndAmortization'] = self.unleveredFreeCashFlow.loc[self.unleveredFreeCashFlow["fiscalDateEnding"] == year, 'depreciationAndAmortization']
+            # pull capital expenditures from fixedAssetSchedule
+            self.unleveredFreeCashFlow.loc[self.unleveredFreeCashFlow["fiscalDateEnding"] == year, 'capitalExpenditures'] = self.fixedAssetSchedule.loc[self.fixedAssetSchedule["fiscalDateEnding"] == year, 'capitalExpenditures']
+            # pull changeNWC from nwc
+            # self.unleveredFreeCashFlow.loc[self.unleveredFreeCashFlow["fiscalDateEnding"] == year, 'changeNWC'] = self.nwc.loc[self.nwc["fiscalDateEnding"] == year, 'netWorkingCapital'] - self.nwc.loc[self.nwc["fiscalDateEnding"] == year - 1, 'netWorkingCapital']
+            # print out NWC for each future year
+            # print(f"Net Working Capital for {year}: {self.nwc.loc[self.nwc['fiscalDateEnding'] == year, 'netWorkingCapital'].values[0]}")
+            # print(f"Change in NWC from {year - 1} to {year}: {self.nwc.loc[self.nwc['fiscalDateEnding'] == year, 'netWorkingCapital'].values[0] - self.nwc.loc[self.nwc['fiscalDateEnding'] == year - 1, 'netWorkingCapital'].values[0]}")
+            self.unleveredFreeCashFlow.loc[self.unleveredFreeCashFlow["fiscalDateEnding"] == year, 'changeNWC'] = self.nwc.loc[self.nwc['fiscalDateEnding'] == year, 'netWorkingCapital'].values[0] - self.nwc.loc[self.nwc['fiscalDateEnding'] == year - 1, 'netWorkingCapital'].values[0]
+            # calculate unlevered free cash flow
+            self.unleveredFreeCashFlow.loc[self.unleveredFreeCashFlow["fiscalDateEnding"] == year, 'unleveredFreeCashFlow'] = self.unleveredFreeCashFlow.loc[self.unleveredFreeCashFlow["fiscalDateEnding"] == year, 'netIncome'] + \
+                self.unleveredFreeCashFlow.loc[self.unleveredFreeCashFlow["fiscalDateEnding"] == year, 'depreciationDepletionAndAmortization'] - self.unleveredFreeCashFlow.loc[self.unleveredFreeCashFlow["fiscalDateEnding"] == year, 'changeNWC'] - \
+                self.unleveredFreeCashFlow.loc[self.unleveredFreeCashFlow["fiscalDateEnding"] == year, 'capitalExpenditures']
         
         return self.unleveredFreeCashFlow
     

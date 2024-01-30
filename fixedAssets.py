@@ -3,8 +3,8 @@ import pandas as pd
 
 class fixedAssets:
     assumptions = {
-        "DandA_as_percentage_of_beginning_PPE": 0.26,
-        "CapEx_as_percentage_of_beginning_PPE": 0.30
+        "DandA_as_percentage_of_beginning_PPE": 0.287,
+        "CapEx_as_percentage_of_beginning_PPE": 0.347
     }
     
     def __init__(self, balance_sheet_data, cash_flow_data):

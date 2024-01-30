@@ -7,6 +7,7 @@ from utility import makeBalanceSheet, makeIncomeStatement, makeCashFlow
 from netWorkingCapital import netWorkingCapital
 from freeCashFlow import freeCashFlow
 from wacc import wacc
+from terminalValue import terminalValue
 
 api_key = "0QIZ1SNXRHO8UH7A"
 symbol = "AAPL"
@@ -78,9 +79,14 @@ nwc = netWorkingCapital(balanceSheet, incomeStatement).returnNetWorkingCapital()
 unleveredFreeCashFlow = freeCashFlow(cashFlow, incomeStatement, nwc, fixedAssetSchedule).generateFCF()
 
 wacc = wacc(balanceSheet, incomeStatement).getWacc()
+tv = terminalValue(unleveredFreeCashFlow, wacc, balanceSheet)
 
 pd.set_option("display.max_rows", None)
 pd.set_option("display.max_columns", None)
+# display(fixedAssetSchedule)
 display(unleveredFreeCashFlow)
 # display(nwc)
-# print(wacc)
+print(f"The wacc is: {wacc}")
+display(tv.calculatePVofFCF())
+tv.calculateTerminalValue()
+
