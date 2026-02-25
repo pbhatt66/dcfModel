@@ -1,0 +1,14 @@
+streamlit
+pandas
+numpy
+matplotlib
+altair
+plotly
+alpaca-py
+openpyxl
+tomli
+requests
+finnhub-python
+seaborn
+uuid
+pathlib
