@@ -23,6 +23,14 @@ DATA_ROOT.mkdir(parents=True, exist_ok=True)
     
 if "analysis_done" not in st.session_state:
     st.session_state.analysis_done = False
+if "run_dcf_clicked" not in st.session_state:
+    st.session_state.run_dcf_clicked = False
+if "iv_surface_payload" not in st.session_state:
+    st.session_state.iv_surface_payload = None
+if "iv_option_type" not in st.session_state:
+    st.session_state.iv_option_type = "call"
+if "iv_max_contracts" not in st.session_state:
+    st.session_state.iv_max_contracts = 800
 
 def to_excel(dcf: DCFAnalyzer, sensitivity_df: pd.DataFrame):
     output = io.BytesIO()
@@ -66,35 +74,36 @@ def to_excel(dcf: DCFAnalyzer, sensitivity_df: pd.DataFrame):
 
 st.set_page_config(page_title="Stock Valuation", layout="wide")
 st.title("🔍 Stock Valuation Dashboard")
-st.markdown(
-    """
-### Before You Run
-Use this app to estimate a stock's value from a simplified DCF workflow and supporting analytics.
+if not st.session_state.run_dcf_clicked:
+    st.markdown(
+        """
+        ### Before You Run
+        Use this app to estimate a stock's value from a simplified DCF workflow and supporting analytics.
 
-**What this dashboard includes**
-- DCF valuation summary
-- Free cash flow projections and PV breakdown
-- Sensitivity analysis (WACC vs. terminal growth)
-- Technical analysis charting
-- Options implied volatility surface
-- Excel export of core model outputs
+        **What this dashboard includes**
+        - DCF valuation summary
+        - Free cash flow projections and PV breakdown
+        - Sensitivity analysis (WACC vs. terminal growth)
+        - Technical analysis charting
+        - Options implied volatility surface
+        - Excel export of core model outputs
 
-**API keys required**
-- **Alpha Vantage**: company overview + financial statements
-- **Finnhub**: current share price quote used in upside/downside
-- **Alpaca**: options chain data for IV surface tab
+        **API keys required**
+        - **Alpha Vantage**: company overview + financial statements
+        - **Finnhub**: current share price quote used in upside/downside
+        - **Alpaca**: options chain data for IV surface tab
 
-**Rate limit notes**
-- Free API tiers can throttle requests or return incomplete responses
-- Alpha Vantage free tier is especially strict; repeated reruns can trigger limits
-- If data fails to load, wait and rerun later, or use higher-tier API access
+        **Rate limit notes**
+        - Free API tiers can throttle requests or return incomplete responses
+        - Alpha Vantage free tier is especially strict; repeated reruns can trigger limits
+        - If data fails to load, wait and rerun later, or use higher-tier API access
 
-**Model assumptions / caveats**
-- Revenue and line items are projected using simple linear assumptions
-- Terminal value uses a constant-growth perpetuity model
-- Outputs are directional and educational, not investment advice
-"""
-)
+        **Model assumptions / caveats**
+        - Revenue and line items are projected using simple linear assumptions
+        - Terminal value uses a constant-growth perpetuity model
+        - Outputs are directional and educational, not investment advice
+        """
+    )
 
 ticker = st.sidebar.text_input("Ticker").upper()
 
@@ -157,6 +166,7 @@ run_dcf_button = st.sidebar.button("Run DCF")
 
 
 if run_dcf_button:
+    st.session_state.run_dcf_clicked = True
     if not alpha_key or not finnhub_key:
         st.error("Please enter Alpha Vantage and Finnhub API keys.")
     else:
@@ -362,17 +372,43 @@ if st.session_state.analysis_done:
     # 4) IV Surface tab
     with tabs[4]:
         st.subheader("Options Implied Volatility Surface (Alpaca)")
-        option_type = st.selectbox("Option Type", ["call", "put"], index=0)
-        max_contracts = st.slider("Max contracts", 200, 2000, 800, 100)
+        with st.form("iv_surface_form"):
+            option_type = st.selectbox(
+                "Option Type",
+                ["call", "put"],
+                key="iv_option_type",
+            )
+            max_contracts = st.slider(
+                "Max contracts",
+                200,
+                2000,
+                key="iv_max_contracts",
+                step=100,
+            )
+            load_iv_surface = st.form_submit_button("Load IV Surface")
 
-        if st.button("Load IV Surface"):
+        if load_iv_surface:
             try:
                 df = fetch_option_chain(ticker, limit=max_contracts)
                 surface = build_iv_surface(df, options_type=option_type)
                 if surface is None or surface.empty:
                     st.warning("No IV data found.")
+                    st.session_state.iv_surface_payload = None
                 else:
-                    fig = build_plot(ticker, surface, options_type=option_type)
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.session_state.iv_surface_payload = {
+                        "ticker": ticker,
+                        "option_type": option_type,
+                        "surface": surface,
+                    }
             except Exception as e:
                 st.error(f"Failed to load IV surface: {e}")
+                st.session_state.iv_surface_payload = None
+
+        iv_payload = st.session_state.iv_surface_payload
+        if iv_payload:
+            fig = build_plot(
+                iv_payload["ticker"],
+                iv_payload["surface"],
+                options_type=iv_payload["option_type"],
+            )
+            st.plotly_chart(fig, use_container_width=True)
