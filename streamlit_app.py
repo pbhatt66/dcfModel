@@ -72,7 +72,7 @@ def to_excel(dcf: DCFAnalyzer, sensitivity_df: pd.DataFrame):
     output.seek(0)  # Reset the BytesIO object to the beginning
     return output.getvalue()
 
-st.set_page_config(page_title="Stock Valuation", layout="wide")
+st.set_page_config(page_title="Stock Valuation Dashboard", layout="wide")
 st.title("🔍 Stock Valuation Dashboard")
 if not st.session_state.run_dcf_clicked:
     st.markdown(
